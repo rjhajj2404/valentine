@@ -1,247 +1,816 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Dorsa 💌</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dorsa 💌</title>
+  <style>
+    :root{
+      --bg1:#fff0f6;
+      --bg2:#ffe4ef;
+      --ink:#2b1b22;
+      --red:#c1121f;
+      --red2:#ff3b7a;
+      --pink:#ff7aa8;
+      --cream:#fff7fb;
+      --shadow: 0 24px 70px rgba(0,0,0,.18);
+      --yesScale: 1;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      overflow:hidden;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink);
+      background:
+        radial-gradient(1200px 600px at 15% 10%, #ffffff 0%, transparent 60%),
+        radial-gradient(900px 600px at 85% 25%, #fff6fa 0%, transparent 60%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+    }
 
-<style>
-body{
-margin:0;
-font-family:system-ui;
-background:linear-gradient(135deg,#fff0f6,#ffe4ec);
-overflow:hidden;
-color:#2b1b22;
-}
+    /* floating hearts + roses layer */
+    .float-layer{
+      position:fixed; inset:0;
+      pointer-events:none;
+      overflow:hidden;
+      z-index:0;
+    }
+    .float{
+      position:absolute;
+      bottom:-10vh;
+      animation: floatUp linear forwards;
+      opacity:.85;
+      filter: drop-shadow(0 10px 14px rgba(0,0,0,.12));
+      will-change: transform, opacity;
+    }
+    @keyframes floatUp{
+      from{ transform: translateY(0) rotate(0deg); opacity:.9; }
+      to{ transform: translateY(-125vh) rotate(20deg); opacity:0; }
+    }
 
-/* 🌹 Floating Roses */
-.rose{
-position:fixed;
-width:22px;
-height:22px;
-background:#ff3b7a;
-border-radius:50%;
-animation:float 8s linear infinite;
-opacity:.7;
-}
-@keyframes float{
-0%{transform:translateY(100vh)}
-100%{transform:translateY(-120vh)}
-}
+    /* heart shape */
+    .heart{
+      width:16px; height:16px;
+      transform: rotate(45deg);
+      color: hsl(335 90% 60%);
+      background: currentColor;
+    }
+    .heart::before,.heart::after{
+      content:"";
+      position:absolute;
+      width:16px; height:16px;
+      border-radius:50%;
+      background: currentColor;
+    }
+    .heart::before{ left:-8px; top:0; }
+    .heart::after{ left:0; top:-8px; }
 
-/* Layout */
-.container{
-height:100vh;
-display:flex;
-flex-direction:column;
-justify-content:center;
-align-items:center;
-text-align:center;
-padding:20px;
-}
+    /* rose icon (simple) */
+    .rose{
+      font-size: 20px;
+      transform: rotate(-8deg);
+      text-shadow: 0 8px 12px rgba(0,0,0,.12);
+    }
 
-h1{
-font-size:32px;
-margin-bottom:10px;
-}
+    /* main layout */
+    .wrap{
+      position:relative;
+      z-index:1;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:22px;
+    }
 
-.buttons{
-margin-top:20px;
-display:flex;
-gap:12px;
-flex-wrap:wrap;
-justify-content:center;
-}
+    .card{
+      width:min(980px, 96vw);
+      background: rgba(255,255,255,.68);
+      border:1px solid rgba(255,255,255,.7);
+      border-radius:28px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      padding:22px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:18px;
+      align-items:center;
+    }
+    @media (max-width: 860px){
+      .card{ grid-template-columns:1fr; }
+    }
 
-button{
-border:none;
-padding:14px 18px;
-border-radius:999px;
-font-weight:bold;
-font-size:16px;
-cursor:pointer;
-box-shadow:0 10px 20px rgba(0,0,0,.2);
-}
+    .headline{
+      margin:0 0 10px 0;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height:1.03;
+      letter-spacing:-.02em;
+    }
+    .sub{
+      margin:0 0 16px 0;
+      font-size: clamp(15px, 2.3vw, 18px);
+      opacity:.86;
+    }
 
-#yes{
-background:#16a34a;
-color:white;
-transition:.3s;
-}
+    .actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:center;
+      margin-top:14px;
+    }
+    button{
+      border:0;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      font-weight:900;
+      padding:14px 18px;
+      border-radius:999px;
+      font-size:16px;
+      box-shadow: 0 16px 28px rgba(0,0,0,.18);
+      transition: transform .15s ease, opacity .15s ease;
+    }
+    #yesBtn{
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color:white;
+      transform: scale(var(--yesScale));
+      position:relative;
+      z-index:2;
+    }
+    #noBtn{
+      background: linear-gradient(135deg, #ff5a6e, #ef4444);
+      color:white;
+      position:relative;
+      z-index:1;
+    }
 
-#no{
-background:#ef4444;
-color:white;
-position:relative;
-}
+    .tiny{
+      margin-top:10px;
+      font-size:13px;
+      opacity:.75;
+    }
 
-/* Envelope */
-.envelope{
-margin-top:30px;
-width:260px;
-height:160px;
-background:#c1121f;
-border-radius:12px;
-display:flex;
-align-items:center;
-justify-content:center;
-color:white;
-font-weight:bold;
-box-shadow:0 20px 40px rgba(0,0,0,.2);
-cursor:pointer;
-position:relative;
-}
+    /* right column: scenic */
+    .scene{
+      position:relative;
+      height: 320px;
+      border-radius:22px;
+      background:
+        radial-gradient(140px 90px at 25% 35%, rgba(255,255,255,.9), transparent 65%),
+        radial-gradient(220px 160px at 70% 25%, rgba(255,235,245,.95), transparent 60%),
+        linear-gradient(135deg, rgba(255,255,255,.7), rgba(255,255,255,.35));
+      border:1px solid rgba(255,255,255,.65);
+      overflow:hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+    }
+    @media (max-width: 860px){
+      .scene{ height: 280px; }
+    }
 
-.wax{
-position:absolute;
-bottom:-14px;
-background:#7f1d1d;
-width:46px;
-height:46px;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-font-size:18px;
-}
+    /* bouquet corner */
+    .bouquet{
+      position:absolute;
+      right:-24px;
+      top:-24px;
+      width:220px;
+      height:220px;
+      transform: rotate(8deg);
+      filter: drop-shadow(0 24px 22px rgba(0,0,0,.12));
+      opacity:.95;
+    }
+    .flower{
+      position:absolute;
+      inset:18%;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #fff 0%, var(--pink) 35%, var(--red2) 95%);
+      transform-origin: 50% 90%;
+    }
+    .flower:nth-child(1){ transform: rotate(0deg) translateY(-18%); }
+    .flower:nth-child(2){ transform: rotate(60deg) translateY(-18%); }
+    .flower:nth-child(3){ transform: rotate(120deg) translateY(-18%); }
+    .flower:nth-child(4){ transform: rotate(180deg) translateY(-18%); }
+    .flower:nth-child(5){ transform: rotate(240deg) translateY(-18%); }
+    .flower:nth-child(6){ transform: rotate(300deg) translateY(-18%); }
+    .center{
+      position:absolute;
+      inset:34%;
+      border-radius:50%;
+      background: radial-gradient(circle at 35% 35%, #fff7cc 0%, #ffdf6e 40%, #d99a00 100%);
+      box-shadow: inset 0 10px 18px rgba(255,255,255,.45),
+                  inset 0 -14px 18px rgba(0,0,0,.16);
+    }
 
-/* Message Modal */
-.modal{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.5);
-display:none;
-justify-content:center;
-align-items:center;
-padding:20px;
-}
+    /* bunny + envelope animation */
+    .bunny-wrap{
+      position:absolute;
+      left:-220px;
+      bottom:14px;
+      width: 360px;
+      height: 220px;
+      animation: bunnyIn 2.4s cubic-bezier(.2,.9,.2,1) .2s forwards;
+    }
+    @keyframes bunnyIn{
+      from{ transform: translateX(0); }
+      to{ transform: translateX(260px); }
+    }
+    @media (max-width: 860px){
+      .bunny-wrap{ animation: bunnyInMobile 2.4s cubic-bezier(.2,.9,.2,1) .2s forwards; }
+      @keyframes bunnyInMobile{
+        from{ transform: translateX(0); }
+        to{ transform: translateX(220px); }
+      }
+    }
 
-.modal-content{
-background:white;
-max-width:700px;
-max-height:80vh;
-overflow:auto;
-border-radius:18px;
-padding:20px;
-text-align:left;
-}
+    .bunny{
+      position:absolute;
+      left:0;
+      bottom:0;
+      width:180px;
+      height:160px;
+      filter: drop-shadow(0 18px 18px rgba(0,0,0,.16));
+      transform-origin: 30% 100%;
+      animation: bunnyBounce 2.2s ease-in-out infinite;
+    }
+    @keyframes bunnyBounce{
+      0%,100%{ transform: translateY(0) rotate(-1deg); }
+      50%{ transform: translateY(-6px) rotate(1deg); }
+    }
+    .ear{
+      position:absolute;
+      top:0;
+      width:48px; height:96px;
+      background: linear-gradient(#ffffff, #f2f2f2);
+      border-radius: 999px;
+      border:1px solid rgba(0,0,0,.05);
+    }
+    .ear::after{
+      content:"";
+      position:absolute;
+      inset:16px 12px 14px 12px;
+      background: radial-gradient(circle at 30% 30%, #ffd1e0, #ff9dbd);
+      border-radius: 999px;
+      opacity:.9;
+    }
+    .ear.l{ left:26px; transform: rotate(-8deg); }
+    .ear.r{ left:88px; transform: rotate(10deg); }
 
-.show{display:flex;}
-</style>
+    .head{
+      position:absolute;
+      top:52px; left:24px;
+      width:140px; height:120px;
+      background: linear-gradient(#fff, #f3f3f3);
+      border-radius: 80px 80px 70px 70px;
+      border:1px solid rgba(0,0,0,.05);
+    }
+    .cheek{
+      position:absolute;
+      width:26px; height:18px;
+      background: rgba(255,120,170,.28);
+      border-radius: 999px;
+      bottom:32px;
+    }
+    .cheek.l{ left:18px; }
+    .cheek.r{ right:18px; }
+
+    .eye{
+      position:absolute;
+      top:46px;
+      width:10px; height:14px;
+      background:#1f1b1d;
+      border-radius: 999px;
+    }
+    .eye.l{ left:46px; }
+    .eye.r{ right:46px; }
+    .shine{
+      position:absolute;
+      width:4px; height:4px;
+      background:white;
+      border-radius:50%;
+      top:3px; left:3px;
+      opacity:.9;
+    }
+    .nose{
+      position:absolute;
+      left:50%;
+      top:64px;
+      transform: translateX(-50%);
+      width:14px; height:10px;
+      background: #ff7aa8;
+      border-radius: 999px;
+      box-shadow: 0 8px 0 rgba(0,0,0,.04);
+    }
+    .mouth{
+      position:absolute;
+      left:50%;
+      top:78px;
+      transform: translateX(-50%);
+      width:24px; height:14px;
+      border-bottom: 3px solid rgba(40,25,32,.45);
+      border-radius: 0 0 999px 999px;
+      opacity:.55;
+    }
+
+    .paw{
+      position:absolute;
+      bottom:-6px;
+      width:54px; height:46px;
+      background: linear-gradient(#fff, #f3f3f3);
+      border-radius: 999px;
+      border:1px solid rgba(0,0,0,.05);
+    }
+    .paw.l{ left:20px; transform: rotate(8deg); }
+    .paw.r{ right:20px; transform: rotate(-8deg); }
+
+    /* envelope held by bunny */
+    .gift{
+      position:absolute;
+      left:150px;
+      bottom:46px;
+      width:170px;
+      height:110px;
+      transform-origin: 10% 70%;
+      animation: giftWiggle 2.6s ease-in-out infinite;
+      cursor:pointer;
+      pointer-events:auto;
+    }
+    @keyframes giftWiggle{
+      0%,100%{ transform: rotate(-1deg) translateY(0); }
+      50%{ transform: rotate(1.5deg) translateY(-3px); }
+    }
+    .env{
+      position:absolute;
+      inset:0;
+      background: linear-gradient(180deg, #d4142a, #a10e20);
+      border-radius:14px;
+      box-shadow: 0 22px 35px rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.25);
+      overflow:hidden;
+    }
+    .env::before{
+      content:"";
+      position:absolute;
+      left:-10%;
+      top:-40%;
+      width:120%;
+      height:120%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 55%);
+      transform: rotate(10deg);
+      opacity:.8;
+    }
+    .env .flap{
+      position:absolute;
+      left:0; right:0; top:0;
+      height:62%;
+      background: linear-gradient(180deg, #e01b33, #b10f24);
+      clip-path: polygon(0 0, 100% 0, 50% 72%);
+      opacity:.92;
+    }
+    .seal{
+      position:absolute;
+      left:50%; top:58%;
+      transform: translate(-50%, -50%);
+      width:46px; height:46px;
+      border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #8b0c1c, #5a0712);
+      box-shadow: inset 0 8px 12px rgba(255,255,255,.12),
+                  inset 0 -10px 14px rgba(0,0,0,.35);
+      display:grid;
+      place-items:center;
+      color:#ffd1e0;
+      font-size:18px;
+    }
+    .tofrom{
+      position:absolute;
+      left:10px; right:10px;
+      bottom:10px;
+      font-size:10px;
+      line-height:1.15;
+      color: rgba(255,255,255,.92);
+      text-align:left;
+      letter-spacing:.02em;
+    }
+    .tofrom b{ color:#fff; }
+
+    /* modal love letter */
+    .modal{
+      position:fixed;
+      inset:0;
+      display:none;
+      place-items:center;
+      padding:18px;
+      background: rgba(0,0,0,.38);
+      z-index:9999;
+    }
+    .modal.show{ display:grid; }
+    .paper{
+      width:min(860px, 96vw);
+      max-height: 84vh;
+      overflow:auto;
+      background: linear-gradient(#fff, #fff7fb);
+      border-radius:26px;
+      box-shadow: var(--shadow);
+      border:1px solid rgba(255,255,255,.7);
+      padding:18px;
+      position:relative;
+    }
+    .paper .top{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      background: rgba(255,59,122,.10);
+      color: #7a1634;
+      border:1px solid rgba(255,59,122,.18);
+      padding:8px 12px;
+      border-radius:999px;
+      font-weight:800;
+      font-size:13px;
+    }
+    .close{
+      border:0;
+      background: rgba(0,0,0,.06);
+      padding:10px 12px;
+      border-radius:999px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:none;
+    }
+    .letter{
+      padding:14px 14px 18px;
+      border-radius:18px;
+      background: rgba(255,255,255,.7);
+      border:1px solid rgba(0,0,0,.06);
+      line-height:1.55;
+      font-size:15px;
+      white-space:pre-wrap;
+    }
+    .signature{
+      margin-top:12px;
+      font-weight:900;
+      color:#7a1634;
+    }
+
+    /* full screen YES takeover */
+    .yes-fullscreen #yesBtn{
+      position:fixed;
+      left:50%; top:50%;
+      transform: translate(-50%,-50%) scale(1) !important;
+      width: 130vmax;
+      height: 130vmax;
+      border-radius: 9999px;
+      z-index: 9998;
+      font-size: clamp(26px, 6vw, 60px);
+      box-shadow: 0 50px 140px rgba(0,0,0,.35);
+    }
+    .yes-fullscreen #noBtn{
+      opacity:0; pointer-events:none;
+    }
+
+    /* tiny music toggle */
+    .corner{
+      position:fixed;
+      right:14px;
+      top:14px;
+      z-index:10;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .pill{
+      background: rgba(255,255,255,.7);
+      border:1px solid rgba(255,255,255,.8);
+      backdrop-filter: blur(10px);
+      border-radius:999px;
+      padding:10px 12px;
+      box-shadow: 0 14px 30px rgba(0,0,0,.12);
+      font-weight:800;
+      cursor:pointer;
+      user-select:none;
+    }
+  </style>
 </head>
-
 <body>
 
-<div id="roses"></div>
+  <div class="float-layer" id="floatLayer"></div>
 
-<div class="container">
-<h1>Dorsa Ghasemi 💘<br>Will you be my Valentine?</h1>
+  <div class="corner">
+    <div class="pill" id="musicBtn">🔈 Tap for music</div>
+  </div>
 
-<div class="buttons">
-<button id="yes">YES 😍</button>
-<button id="no">No 🙃</button>
-</div>
+  <div class="wrap">
+    <div class="card">
+      <div>
+        <h1 class="headline">Dorsa Ghasemi 💘<br>Will you be my Valentine?</h1>
+        <p class="sub">
+          I made you a little magical moment — roses in the air, a tiny bunny delivery… and one question I really hope you say yes to. 🌹🐰
+        </p>
 
-<div class="envelope" id="openLetter">
-Open me to: Dorsa Ghasemi<br>From: Raed El Hajj
-<div class="wax">🌹</div>
-</div>
-</div>
+        <div class="actions">
+          <button id="yesBtn">YES 😍</button>
+          <button id="noBtn">No 🙃</button>
+        </div>
 
-<div class="modal" id="letter">
-<div class="modal-content">
+        <div class="tiny">Tip: tap the envelope the bunny brings you 💌</div>
+      </div>
 
-<p>
-I want to take this moment to tell you clearly and honestly how much you mean to me and how deeply I appreciate who you are as a person. Sometimes I don’t say everything I feel in the moment, so I wanted to put my thoughts into words and give you something you can read whenever you need a reminder of how valued you are.
+      <div class="scene" id="scene">
+        <div class="bouquet" aria-hidden="true">
+          <div class="flower"></div><div class="flower"></div><div class="flower"></div>
+          <div class="flower"></div><div class="flower"></div><div class="flower"></div>
+          <div class="center"></div>
+        </div>
+
+        <div class="bunny-wrap">
+          <div class="bunny" aria-hidden="true">
+            <div class="ear l"></div>
+            <div class="ear r"></div>
+            <div class="head">
+              <div class="eye l"><div class="shine"></div></div>
+              <div class="eye r"><div class="shine"></div></div>
+              <div class="nose"></div>
+              <div class="mouth"></div>
+              <div class="cheek l"></div>
+              <div class="cheek r"></div>
+              <div class="paw l"></div>
+              <div class="paw r"></div>
+            </div>
+          </div>
+
+          <div class="gift" id="gift" title="Tap to open 💌">
+            <div class="env">
+              <div class="flap"></div>
+              <div class="seal">🌸</div>
+              <div class="tofrom">
+                <div><b>Open me to:</b> Dorsa Ghasemi</div>
+                <div><b>From:</b> Raed El Hajj</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- LOVE LETTER MODAL -->
+  <div class="modal" id="modal">
+    <div class="paper" role="dialog" aria-modal="true" aria-label="Love letter">
+      <div class="top">
+        <div class="tag">💌 Opened for Dorsa</div>
+        <button class="close" id="closeBtn">Close ✕</button>
+      </div>
+      <div class="letter" id="letterText"></div>
+      <div class="signature">— Raed El Hajj 💖</div>
+    </div>
+  </div>
+
+<script>
+  // ======= Your letter text (exact, unchanged) =======
+  const LETTER = `I want to take this moment to tell you clearly and honestly how much you mean to me and how deeply I appreciate who you are as a person. Sometimes I don’t say everything I feel in the moment, so I wanted to put my thoughts into words and give you something you can read whenever you need a reminder of how valued you are.
 
 You are truly an amazing person. The way you care about people, the way you listen, and the way you show kindness in small everyday actions does not go unnoticed. I see the effort you put into the people around you, and I see how genuine your heart is. You don’t pretend to be someone else, and that honesty is something I respect deeply. Being around you feels calm and safe because you bring a sense of warmth that makes everything feel more grounded.
 
 What I admire most about you is your caring nature. You always think about how others feel, and you never hesitate to support the people you love. Even when you have your own challenges, you still find a way to show compassion. That level of emotional strength is rare, and I want you to know that I notice it every single day. You are thoughtful in ways that many people overlook, and that thoughtfulness makes a real difference in my life.
 
-You have a beautiful way of understanding situations without judgment. When I talk to you, I feel heard. When I’m stressed or overwhelmed, your presence makes things easier to handle.
+You have a beautiful way of understanding situations without judgment. When I talk to you, I feel heard. When I’m stressed or overwhelmed, your presence makes things easier to handle. You don’t need to do anything extraordinary to make an impact, simply being yourself already brings comfort and stability. I appreciate how patient you are, how you try to understand before reacting, and how you always approach things with sincerity.
 
-Another thing that makes you special is your strength. You might not always see it yourself, but I see it clearly.
+Another thing that makes you special is your strength. You might not always see it yourself, but I see it clearly. You handle situations with maturity, and you continue to grow while staying true to your values. You don’t give up easily, and you always try to move forward even when things are difficult. That determination inspires me, and it reminds me how lucky I am to have you by my side.
 
-I also want to thank you for the way you treat me. Your support means more than I can fully explain.
+I also want to thank you for the way you treat me. Your support means more than I can fully explain. You encourage me, you believe in me, and you remind me to keep pushing toward my goals. Having someone who genuinely wants to see me succeed is something I never take for granted. You bring balance into my life, and you help me become a better version of myself without ever trying to change who I am.
 
-You are wonderful not only because of the big things you do but also because of the small details that make up who you are.
+You are wonderful not only because of the big things you do but also because of the small details that make up who you are. The way you smile, the way you check in to make sure everything is okay, the way you stay present in conversations,  all of these things show how genuine you are. You don’t seek attention for being kind, you simply act from your heart, and that authenticity is one of the reasons I admire you so much.
 
-I appreciate how you make time for us, how you value our connection, and how you continue to show effort in building something meaningful together.
+I appreciate how you make time for us, how you value our connection, and how you continue to show effort in building something meaningful together. Relationships grow through consistency, honesty, and care, and you bring all of that naturally. You make it easy to feel appreciated, respected, and understood, and that is something I will always be grateful for.
 
-You have a way of making ordinary moments feel important because you give them your full attention.
+You have a way of making ordinary moments feel important because you give them your full attention. When we talk, laugh, or simply spend time together, I feel genuinely happy. It’s not about grand gestures or complicated plans,  it’s about the comfort of being with someone who truly cares. That feeling of comfort is something I treasure deeply.
 
-I want you to remember that you are appreciated exactly as you are.
+I want you to remember that you are appreciated exactly as you are. You don’t need to change anything to be worthy of love or admiration. Your kindness, your patience, your loyalty, and your honesty already make you someone incredibly special. I hope you always see yourself through the eyes of someone who values you, respects you, and cares deeply about your happiness.
 
-Thank you for being there during both good days and challenging moments.
+Thank you for being there during both good days and challenging moments. Thank you for the conversations, the support, and the understanding you give without hesitation. Thank you for your effort, your time, and your presence. Every part of who you are adds something meaningful to my life, and I want you to know that I never overlook it.
 
-Today is a reminder to express appreciation openly, but my feelings are not limited to a single day.
+Today is a reminder to express appreciation openly, but my feelings are not limited to a single day. I respect you, I admire you, and I genuinely care about your well being. You deserve to feel valued, supported, and loved in ways that are consistent and real. I hope this message shows you just how much you mean to me and how thankful I am to have you in my life.
 
-You are amazing, you are wonderful, and you are deeply appreciated.
+You are amazing, you are wonderful, and you are deeply appreciated. I hope you always feel proud of the person you are becoming and confident in the qualities that make you unique. Thank you for being you, and thank you for everything you bring into my life.
 
-— Raed El Hajj 💌
-</p>
+Thank you for being there during both good days and challenging moments. Thank you for the conversations, the support, and the understanding you give without hesitation. Thank you for your effort, your time, and your presence. Every part of who you are adds something meaningful to my life, and I want you to know that I never overlook it.
 
-</div>
-</div>
+Today is a reminder to express appreciation openly, but my feelings are not limited to a single day. I respect you, I admire you, and I genuinely care about your well being. You deserve to feel valued, supported, and loved in ways that are consistent and real. I hope this message shows you just how much you mean to me and how thankful I am to have you in my life.
 
-<script>
+You are amazing, you are wonderful, and you are deeply appreciated. I hope you always feel proud of the person you are becoming and confident in the qualities that make you unique. Thank you for being you, and thank you for everything you bring into my life.`;
 
-/* 🌹 Roses generator */
-const roseContainer=document.getElementById("roses");
-setInterval(()=>{
-let r=document.createElement("div");
-r.className="rose";
-r.style.left=Math.random()*100+"vw";
-r.style.animationDuration=(6+Math.random()*6)+"s";
-roseContainer.appendChild(r);
-setTimeout(()=>r.remove(),12000);
-},300);
+  // Put letter in modal
+  const letterEl = document.getElementById("letterText");
+  letterEl.textContent = LETTER;
 
-/* Envelope open */
-document.getElementById("openLetter").onclick=()=>{
-document.getElementById("letter").classList.add("show");
-}
+  // ======= floating stuff (roses + hearts) =======
+  const layer = document.getElementById("floatLayer");
+  function spawnFloat(){
+    const el = document.createElement("div");
+    el.className = "float";
 
-/* YES button grows */
-let scale=1;
-const yes=document.getElementById("yes");
-const no=document.getElementById("no");
+    const isHeart = Math.random() < 0.55;
+    if (isHeart){
+      el.classList.add("heart");
+      const hue = 330 + Math.random() * 25;
+      el.style.color = `hsl(${hue} 90% 60%)`;
+      const size = 10 + Math.random()*14;
+      el.style.width = size+"px";
+      el.style.height = size+"px";
+    } else {
+      el.classList.add("rose");
+      el.textContent = "🌹";
+      el.style.fontSize = (16 + Math.random()*18) + "px";
+      el.style.transform = `rotate(${(Math.random()*30-15).toFixed(1)}deg)`;
+    }
 
-function growYes(){
-scale+=0.2;
-yes.style.transform=`scale(${scale})`;
-if(scale>3){
-yes.style.position="fixed";
-yes.style.inset="0";
-yes.style.borderRadius="0";
-yes.innerText="YESSSS 💖";
-}
-}
+    el.style.left = (Math.random()*100) + "vw";
+    el.style.animationDuration = (5 + Math.random()*7) + "s";
+    layer.appendChild(el);
 
-/* Mobile-friendly NO escape */
-function moveNo(){
-const x=Math.random()*(window.innerWidth-120);
-const y=Math.random()*(window.innerHeight-60);
-no.style.position="fixed";
-no.style.left=x+"px";
-no.style.top=y+"px";
-growYes();
-}
+    const dur = parseFloat(el.style.animationDuration)*1000;
+    setTimeout(()=>el.remove(), dur);
+  }
+  setInterval(spawnFloat, 220);
 
-no.addEventListener("mouseenter",moveNo);
-no.addEventListener("click",(e)=>{e.preventDefault();moveNo();});
-window.addEventListener("touchstart",(e)=>{
-const r=no.getBoundingClientRect();
-const t=e.touches[0];
-if(t.clientX>r.left-30&&t.clientX<r.right+30&&t.clientY>r.top-30&&t.clientY<r.bottom+30){
-moveNo();
-}
-});
+  // ======= envelope open =======
+  const gift = document.getElementById("gift");
+  const modal = document.getElementById("modal");
+  const closeBtn = document.getElementById("closeBtn");
 
-yes.onclick=()=>{
-alert("Happy Valentine's Day Dorsa 💖");
-}
+  function openLetter(){
+    modal.classList.add("show");
+    burstHearts(50);
+  }
+  gift.addEventListener("click", openLetter);
+  closeBtn.addEventListener("click", ()=> modal.classList.remove("show"));
+  modal.addEventListener("click", (e)=>{ if(e.target === modal) modal.classList.remove("show"); });
 
+  // ======= Yes / No logic (mobile-friendly) =======
+  const yesBtn = document.getElementById("yesBtn");
+  const noBtn  = document.getElementById("noBtn");
+  let yesScale = 1;
+  let noCount = 0;
+  let fullscreen = false;
+
+  function setYesScale(){
+    document.documentElement.style.setProperty("--yesScale", yesScale.toFixed(2));
+    yesBtn.style.transform = `scale(${yesScale.toFixed(2)})`;
+  }
+  setYesScale();
+
+  function moveNo(){
+    // move within viewport with padding; works on mobile
+    const pad = 14;
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const r = noBtn.getBoundingClientRect();
+    const x = pad + Math.random() * (w - r.width - pad*2);
+    const y = pad + Math.random() * (h - r.height - pad*2);
+
+    noBtn.style.position = "fixed";
+    noBtn.style.left = x + "px";
+    noBtn.style.top  = y + "px";
+  }
+
+  function noAttempt(){
+    noCount++;
+    yesScale *= 1.18;
+    setYesScale();
+
+    if (!fullscreen && yesScale >= 3.1){
+      fullscreen = true;
+      document.body.classList.add("yes-fullscreen");
+      yesBtn.textContent = "OK OK YES 😍";
+    }
+
+    if (noCount < 3) noBtn.textContent = "No 🙃";
+    else if (noCount < 6) noBtn.textContent = "Are you sure? 😳";
+    else noBtn.textContent = "No (disabled) 🤭";
+
+    moveNo();
+    burstHearts(14 + Math.min(40, noCount*6));
+  }
+
+  // desktop hover
+  noBtn.addEventListener("mouseenter", noAttempt);
+  // click/tap
+  noBtn.addEventListener("click", (e)=>{ e.preventDefault(); noAttempt(); });
+
+  // touch proximity (super mobile friendly)
+  window.addEventListener("touchstart", (e)=>{
+    if(!e.touches || !e.touches[0]) return;
+    const t = e.touches[0];
+    const r = noBtn.getBoundingClientRect();
+    const near = (
+      t.clientX > r.left - 35 && t.clientX < r.right + 35 &&
+      t.clientY > r.top  - 35 && t.clientY < r.bottom + 35
+    );
+    if (near) noAttempt();
+  }, {passive:true});
+
+  // YES click
+  yesBtn.addEventListener("click", ()=>{
+    document.body.classList.add("yes-fullscreen");
+    burstHearts(160);
+    yesBtn.textContent = "YESSS 💖";
+    // sweet confirmation
+    setTimeout(()=> openLetter(), 450);
+  });
+
+  // ======= bursts =======
+  function burstHearts(count){
+    for(let i=0;i<count;i++){
+      const el = document.createElement("div");
+      el.className = "float heart";
+      const hue = 330 + Math.random()*25;
+      el.style.color = `hsl(${hue} 90% 60%)`;
+      const size = 9 + Math.random()*14;
+      el.style.width = size+"px";
+      el.style.height = size+"px";
+      el.style.position = "fixed";
+      el.style.left = (window.innerWidth/2 + (Math.random()-0.5)*360) + "px";
+      el.style.top  = (window.innerHeight/2 + (Math.random()-0.5)*160) + "px";
+      el.style.opacity = .95;
+
+      const dx = (Math.random()-0.5)*520;
+      const dy = -(150 + Math.random()*520);
+      const dur = 1200 + Math.random()*1200;
+
+      el.animate([
+        { transform:`translate(0,0) rotate(45deg)`, opacity:.95 },
+        { transform:`translate(${dx}px, ${dy}px) rotate(45deg)`, opacity:0 }
+      ], { duration: dur, easing:"cubic-bezier(.2,.8,.2,1)", fill:"forwards" });
+
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), dur);
+    }
+  }
+
+  // ======= optional music (no external file) =======
+  // Simple soft chord pad using WebAudio. User must tap to start (mobile browser rules).
+  let audioCtx = null, playing = false, osc = [], gain = null;
+
+  function startMusic(){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    gain = audioCtx.createGain();
+    gain.gain.value = 0.0;
+    gain.connect(audioCtx.destination);
+
+    const freqs = [261.63, 329.63, 392.00, 523.25]; // C major-ish
+    osc = freqs.map(f=>{
+      const o = audioCtx.createOscillator();
+      o.type = "sine";
+      o.frequency.value = f;
+      const g = audioCtx.createGain();
+      g.gain.value = 0.10;
+      o.connect(g); g.connect(gain);
+      o.start();
+      return {o,g};
+    });
+
+    // gentle fade in
+    const now = audioCtx.currentTime;
+    gain.gain.setValueAtTime(0.0, now);
+    gain.gain.linearRampToValueAtTime(0.18, now + 1.4);
+
+    // tiny slow tremolo
+    const lfo = audioCtx.createOscillator();
+    lfo.type = "sine";
+    lfo.frequency.value = 0.12;
+    const lfoGain = audioCtx.createGain();
+    lfoGain.gain.value = 0.04;
+    lfo.connect(lfoGain);
+    lfoGain.connect(gain.gain);
+    lfo.start();
+
+    playing = true;
+    document.getElementById("musicBtn").textContent = "🔊 Music on";
+  }
+
+  function stopMusic(){
+    if(!audioCtx) return;
+    const now = audioCtx.currentTime;
+    gain.gain.linearRampToValueAtTime(0.0, now + 0.6);
+    setTimeout(()=>{
+      osc.forEach(x=>{ try{x.o.stop()}catch(e){} });
+      try{ audioCtx.close(); }catch(e){}
+      audioCtx = null; playing = false;
+      document.getElementById("musicBtn").textContent = "🔈 Tap for music";
+    }, 700);
+  }
+
+  document.getElementById("musicBtn").addEventListener("click", ()=>{
+    if(!playing) startMusic();
+    else stopMusic();
+  });
 </script>
+
 </body>
 </html>
