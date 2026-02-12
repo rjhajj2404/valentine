@@ -755,61 +755,235 @@ You are amazing, you are wonderful, and you are deeply appreciated. I hope you a
 
   // ======= optional music (no external file) =======
   // Simple soft chord pad using WebAudio. User must tap to start (mobile browser rules).
-  let audioCtx = null, playing = false, osc = [], gain = null;
+ // ======= optional music (more romantic, no external file) =======
+// Soft “love theme”: warm pad + gentle melody + shimmer.
+// User must tap to start (mobile browser rules).
+let audioCtx = null, playing = false;
+let nodes = [];
 
-  function startMusic(){
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    gain = audioCtx.createGain();
-    gain.gain.value = 0.0;
-    gain.connect(audioCtx.destination);
+function startMusic(){
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-    const freqs = [261.63, 329.63, 392.00, 523.25]; // C major-ish
-    osc = freqs.map(f=>{
-      const o = audioCtx.createOscillator();
-      o.type = "sine";
-      o.frequency.value = f;
-      const g = audioCtx.createGain();
-      g.gain.value = 0.10;
-      o.connect(g); g.connect(gain);
-      o.start();
-      return {o,g};
-    });
+  const master = audioCtx.createGain();
+  master.gain.value = 0.0001;
+  master.connect(audioCtx.destination);
 
-    // gentle fade in
-    const now = audioCtx.currentTime;
-    gain.gain.setValueAtTime(0.0, now);
-    gain.gain.linearRampToValueAtTime(0.18, now + 1.4);
+  // Gentle reverb-ish space (simple delay network)
+  const delay = audioCtx.createDelay(1.0);
+  delay.delayTime.value = 0.18;
 
-    // tiny slow tremolo
-    const lfo = audioCtx.createOscillator();
-    lfo.type = "sine";
-    lfo.frequency.value = 0.12;
-    const lfoGain = audioCtx.createGain();
-    lfoGain.gain.value = 0.04;
-    lfo.connect(lfoGain);
-    lfoGain.connect(gain.gain);
-    lfo.start();
+  const feedback = audioCtx.createGain();
+  feedback.gain.value = 0.28;
 
-    playing = true;
-    document.getElementById("musicBtn").textContent = "🔊 Music on";
+  const wet = audioCtx.createGain();
+  wet.gain.value = 0.18;
+
+  delay.connect(feedback);
+  feedback.connect(delay);
+
+  // Lowpass to soften repeats
+  const lp = audioCtx.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = 1400;
+
+  // Routing: master -> (dry) + (wet delay)
+  master.connect(audioCtx.destination);
+  master.connect(delay);
+  delay.connect(lp);
+  lp.connect(wet);
+  wet.connect(audioCtx.destination);
+
+  // Helper
+  const now = audioCtx.currentTime;
+
+  // Fade in
+  master.gain.setValueAtTime(0.0001, now);
+  master.gain.exponentialRampToValueAtTime(0.22, now + 1.6);
+
+  // Warm pad (triangle + sine slightly detuned)
+  function pad(freq){
+    const o1 = audioCtx.createOscillator();
+    const o2 = audioCtx.createOscillator();
+    o1.type = "triangle";
+    o2.type = "sine";
+    o1.frequency.value = freq;
+    o2.frequency.value = freq * 1.003;
+
+    const g = audioCtx.createGain();
+    g.gain.value = 0.0;
+
+    // soft filter
+    const f = audioCtx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = 900;
+
+    o1.connect(f); o2.connect(f);
+    f.connect(g);
+    g.connect(master);
+
+    o1.start(); o2.start();
+
+    // pad envelope
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.10, now + 1.2);
+
+    nodes.push(o1,o2,g,f);
+    return g;
   }
 
-  function stopMusic(){
+  // Chord progression (Fmaj7 -> C -> Dm7 -> Bbmaj7) in C major vibe
+  // Frequencies (Hz) for roots: F3, C3, D3, Bb2
+  const chords = [
+    [174.61, 220.00, 261.63, 329.63], // F A C E
+    [130.81, 196.00, 261.63, 329.63], // C G C E
+    [146.83, 220.00, 293.66, 349.23], // D F A F (Dm7-ish feel)
+    [116.54, 174.61, 233.08, 293.66], // Bb F Bb D
+  ];
+
+  // Create pad voices (4 voices we retune per chord)
+  const padOscs = [];
+  for(let i=0;i<4;i++){
+    const o1 = audioCtx.createOscillator();
+    const o2 = audioCtx.createOscillator();
+    o1.type="triangle";
+    o2.type="sine";
+
+    const f = audioCtx.createBiquadFilter();
+    f.type="lowpass";
+    f.frequency.value = 850;
+
+    const g = audioCtx.createGain();
+    g.gain.value = 0.0;
+
+    o1.connect(f); o2.connect(f);
+    f.connect(g);
+    g.connect(master);
+
+    o1.start(); o2.start();
+
+    // voice in
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.075, now + 1.4);
+
+    padOscs.push({o1,o2,g});
+    nodes.push(o1,o2,g,f);
+  }
+
+  let chordIndex = 0;
+  function setChord(idx, t){
+    const chord = chords[idx];
+    for(let i=0;i<4;i++){
+      const base = chord[i];
+      padOscs[i].o1.frequency.setTargetAtTime(base, t, 0.06);
+      padOscs[i].o2.frequency.setTargetAtTime(base * 1.003, t, 0.06);
+    }
+  }
+  setChord(0, now);
+
+  // Change chords slowly
+  const chordEvery = 5.2; // seconds
+  const chordTimer = setInterval(()=>{
     if(!audioCtx) return;
-    const now = audioCtx.currentTime;
-    gain.gain.linearRampToValueAtTime(0.0, now + 0.6);
-    setTimeout(()=>{
-      osc.forEach(x=>{ try{x.o.stop()}catch(e){} });
-      try{ audioCtx.close(); }catch(e){}
-      audioCtx = null; playing = false;
-      document.getElementById("musicBtn").textContent = "🔈 Tap for music";
-    }, 700);
+    chordIndex = (chordIndex+1) % chords.length;
+    setChord(chordIndex, audioCtx.currentTime);
+  }, chordEvery*1000);
+
+  // Gentle melody (simple romantic motif)
+  const melody = [
+    392.00, 440.00, 523.25, 493.88, 440.00, 392.00, // G A C B A G
+    349.23, 392.00, 440.00, 392.00, 349.23, 329.63  // F G A G F E
+  ];
+  let m = 0;
+
+  function pluck(freq, t){
+    const o = audioCtx.createOscillator();
+    o.type = "sine";
+    o.frequency.value = freq;
+
+    const g = audioCtx.createGain();
+    g.gain.value = 0.0001;
+
+    // a tiny shimmer using very light detune
+    o.detune.value = (Math.random()*6 - 3);
+
+    // soft tone shaping
+    const f = audioCtx.createBiquadFilter();
+    f.type = "lowpass";
+    f.frequency.value = 2400;
+
+    o.connect(f); f.connect(g);
+    g.connect(master);
+
+    o.start(t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.12, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+
+    o.stop(t + 0.7);
+
+    nodes.push(o,g,f);
   }
 
-  document.getElementById("musicBtn").addEventListener("click", ()=>{
-    if(!playing) startMusic();
-    else stopMusic();
+  const melodyEvery = 0.62; // seconds
+  const melodyTimer = setInterval(()=>{
+    if(!audioCtx) return;
+    const t = audioCtx.currentTime + 0.02;
+    pluck(melody[m % melody.length], t);
+    m++;
+  }, melodyEvery*1000);
+
+  // Slow sparkle (very soft high notes)
+  const sparkleNotes = [1046.5, 1174.66, 1318.51]; // C6 D6 E6
+  const sparkleTimer = setInterval(()=>{
+    if(!audioCtx) return;
+    if(Math.random() < 0.55) return;
+    const t = audioCtx.currentTime + 0.01;
+    pluck(sparkleNotes[Math.floor(Math.random()*sparkleNotes.length)], t);
+  }, 900);
+
+  playing = true;
+  document.getElementById("musicBtn").textContent = "🔊 Romantic music on";
+
+  // Store timers for cleanup
+  nodes.push({chordTimer, melodyTimer, sparkleTimer, master});
+}
+
+function stopMusic(){
+  if(!audioCtx) return;
+
+  const master = nodes.find(n => n && n.master)?.master;
+  const now = audioCtx.currentTime;
+
+  try{
+    if(master){
+      master.gain.cancelScheduledValues(now);
+      master.gain.setValueAtTime(master.gain.value, now);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+    }
+  }catch(e){}
+
+  // Clear timers
+  nodes.forEach(n=>{
+    if(n && n.chordTimer) clearInterval(n.chordTimer);
+    if(n && n.melodyTimer) clearInterval(n.melodyTimer);
+    if(n && n.sparkleTimer) clearInterval(n.sparkleTimer);
   });
+
+  setTimeout(()=>{
+    // Stop oscillators
+    nodes.forEach(n=>{
+      try{ if(n && n.stop) n.stop(); }catch(e){}
+    });
+    try{ audioCtx.close(); }catch(e){}
+    audioCtx = null; playing = false; nodes = [];
+    document.getElementById("musicBtn").textContent = "🔈 Tap for music";
+  }, 950);
+}
+
+document.getElementById("musicBtn").addEventListener("click", ()=>{
+  if(!playing) startMusic();
+  else stopMusic();
+});
 </script>
 
 </body>
